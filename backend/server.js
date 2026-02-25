@@ -1,31 +1,16 @@
 require("dotenv").config();
 const express = require("express");
-const http = require("http");
-const cors = require("cors");
 const mongoose = require("mongoose");
-const { Server } = require("socket.io");
-
-const authRoutes = require("./routes/auth");
-const messageRoutes = require("./routes/messages");
+const cors = require("cors");
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
-
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect(process.env.MONGO_URI).then(() => console.log("Mongo connected"));
+mongoose.connect(process.env.MONGO_URI);
 
-app.use("/api/auth", authRoutes);
-app.use("/api/messages", messageRoutes);
+app.use("/api/auth", require("./routes/auth"));
 
-io.on("connection", (socket) => {
-  console.log("User connected", socket.id);
+app.get("/", (_, res) => res.send("Backend OK"));
 
-  socket.on("sendMessage", (msg) => {
-    io.emit("receiveMessage", msg);
-  });
-});
-
-server.listen(5000, () => console.log("Server running on port 5000"));
+app.listen(5000, () => console.log("Backend running on 5000"));

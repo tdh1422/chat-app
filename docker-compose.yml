@@ -1,20 +1,45 @@
-version: "3"
+version: "3.9"
+
 services:
   mongo:
-    image: mongo:6
+    image: mongo:7
+    container_name: mongo
+    mem_limit: 1g
     ports:
       - "27017:27017"
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.5"]
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    mem_limit: 256m
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
 
   backend:
     build: ./backend
+    mem_limit: 512m
     ports:
       - "5000:5000"
-    env_file:
-      - ./backend/.env
     depends_on:
       - mongo
+      - redis
+
+  socket:
+    build: ./socket-server
+    mem_limit: 256m
+    ports:
+      - "3001:3001"
+    depends_on:
+      - redis
 
   frontend:
     build: ./frontend
+    mem_limit: 128m
     ports:
-      - "3000:3000"
+      - "8080:80"
+
+  nginx:
+    image: nginx:alpine
+    mem_limit: 64m
+    ports:
+      - "80:80"
