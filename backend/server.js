@@ -1,46 +1,78 @@
 require("dotenv").config();
 const express = require("express");
-const mongoose = require("mongoose");
 const cors = require("cors");
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-// Import file kết nối database
-const connectDB = require("./config/db");
-
-// Gọi hàm kết nối database
-connectDB();
-
-// Đoạn này không cần nữa nếu đã dùng connectDB
-// mongoose.connect(process.env.MONGO_URI);
-
-// Định nghĩa các route
-app.use("/api/auth", require("./routes/auth"));
-
-app.get("/", (_, res) => res.send("Backend OK"));
-
-app.listen(5000, () => console.log("Backend running on 5000"));
-
+const http = require("http");
 const { Server } = require("socket.io");
 const Redis = require("ioredis");
+const Message = require("./models/message");
 
-const io = new Server(3001, { cors: { origin: "*" } });
+const connectDB = require("./config/db");
+const authRoutes = require("./routes/auth");
+const authSocket = require("./socket/authSocket");
 
-const pub = new Redis("redis://redis:6379");
-const sub = new Redis("redis://redis:6379");
+const app = express();
+const server = http.createServer(app);
+
+// ===== Middleware =====
+app.use(cors({
+  origin: ["http://localhost:3000"],
+  credentials: true
+}));
+app.use(express.json());
+
+// ===== DB =====
+connectDB();
+
+// ===== Routes =====
+app.use("/api/auth", authRoutes);
+app.get("/", (_, res) => res.send("Backend OK"));
+
+// ===== Socket.IO =====
+const io = new Server(server, {
+  cors: {
+    origin: ["http://localhost:3000"],
+    credentials: true
+  }
+});
+
+// auth middleware cho socket
+io.use(authSocket);
+
+// Redis pub/sub
+const pub = new Redis(process.env.REDIS_URL);
+const sub = new Redis(process.env.REDIS_URL);
 
 sub.subscribe("chat");
 
 sub.on("message", (_, msg) => {
-  io.emit("message", JSON.parse(msg));
+  const data = JSON.parse(msg);
+  io.to(data.room).emit("message", data);
 });
 
+// socket connection
 io.on("connection", (socket) => {
-  console.log("User connected");
+  console.log("User connected:", socket.user.id);
 
-  socket.on("send", (data) => {
-    pub.publish("chat", JSON.stringify(data));
+  socket.on("joinRoom", (room) => {
+    socket.join(room);
   });
+
+  socket.on("send", async (data) => {
+    try {
+      const msg = await Message.create({
+        sender: socket.user.id,
+        content: data.content,
+        room: data.room
+      });
+    
+      pub.publish("chat", JSON.stringify(msg));
+    } catch (err) {
+      console.error("Save message error:", err);
+    }
+  });
+});
+
+// ===== LISTEN 1 LẦN DUY NHẤT =====
+server.listen(process.env.PORT || 5000, () => {
+  console.log("Backend + Socket running on 5000");
 });

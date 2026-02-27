@@ -24,14 +24,6 @@ services:
       - mongo
       - redis
 
-  socket:
-    build: ./socket-server
-    mem_limit: 256m
-    ports:
-      - "3001:3001"
-    depends_on:
-      - redis
-
   frontend:
     build: ./frontend
     mem_limit: 128m
