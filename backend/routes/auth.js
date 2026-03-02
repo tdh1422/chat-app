@@ -8,7 +8,11 @@ const { validateRegister } = require("../middleware/validate");
 // Register
 router.post("/register", validateRegister, async (req, res) => {
   const user = await User.create(req.body);
-  res.json({ user });
+  res.json({
+  id: user._id,
+  email: user.email,
+  username: user.username
+});
 });
 
 // Login
@@ -16,7 +20,7 @@ const { loginLimiter } = require("../middleware/rateLimit");
 
 router.post("/login", loginLimiter, async (req, res) => {
   const user = await User.findOne({ email: req.body.email });
-  if (!user) return res.status(401).send("User not found");
+  if (!user) return res.status(401).send("Invalid credentials");
 
   const ok = await bcrypt.compare(req.body.password, user.password);
   if (!ok) return res.status(401).send("Wrong password");
