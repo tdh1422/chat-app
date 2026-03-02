@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "check:preflight": "node scripts_preflight_check.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -11,6 +12,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-rate-limit": "^8.2.1",
+    "ioredis": "^5.10.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.0.3",
     "socket.io": "^4.8.3",

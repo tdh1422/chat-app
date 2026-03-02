@@ -14,8 +14,13 @@ const app = express();
 const server = http.createServer(app);
 
 // ===== Middleware =====
+const corsOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: ["http://localhost:3000"],
+  origin: corsOrigins,
   credentials: true
 }));
 app.use(express.json());
@@ -30,7 +35,7 @@ app.get("/", (_, res) => res.send("Backend OK"));
 // ===== Socket.IO =====
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000"],
+    origin: corsOrigins,
     credentials: true
   }
 });
@@ -65,7 +70,7 @@ io.on("connection", (socket) => {
         room: data.room
       });
     
-      pub.publish("chat", JSON.stringify(msg));
+      io.to(data.room).emit("message", msg);
     } catch (err) {
       console.error("Save message error:", err);
     }
