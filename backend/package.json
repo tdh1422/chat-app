@@ -4,7 +4,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "check:preflight": "node scripts_preflight_check.js"
+    "check:preflight": "node scripts_preflight_check.js",
+    "check:preflight:local": "node scripts_preflight_check.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
