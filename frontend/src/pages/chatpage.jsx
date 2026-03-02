@@ -1,15 +1,7 @@
-import { useEffect, useState } from "react";
-import io from "socket.io-client";
-
-const socket = io("/socket", {
-  transports: ["websocket"],
-});
-
 import { useEffect } from "react";
 import socket from "../socket";
 
-function ChatPage({ user }) {
-
+export default function ChatPage({ user }) {
   useEffect(() => {
     if (!user) return;
 
@@ -24,11 +16,5 @@ function ChatPage({ user }) {
     };
   }, [user]);
 
-  return (
-    <div>
-      Chat Page
-    </div>
-  );
+  return <div>Chat Page</div>;
 }
-
-export default ChatPage;
