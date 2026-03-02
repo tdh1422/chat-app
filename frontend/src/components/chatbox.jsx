@@ -1,40 +1,39 @@
-import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
+import { useEffect } from "react";
+import socket from "../socket";
 
-const socket = io("http://localhost/socket");
-
-export default function Chat() {
-  const [msg, setMsg] = useState("");
-  const [messages, setMessages] = useState([]);
+function ChatBox({ selectedChat }) {
 
   useEffect(() => {
-    socket.on("message", (data) => {
-      setMessages((m) => [...m, data]);
+    if (!selectedChat) return;
+
+    socket.emit("join chat", selectedChat._id);
+
+  }, [selectedChat]);
+
+  useEffect(() => {
+
+    socket.on("message received", (newMessage) => {
+      console.log("New message:", newMessage);
     });
+
+    return () => {
+      socket.off("message received");
+    };
+
   }, []);
 
-  const send = () => {
-    const data = { sender: "hiep", content: msg, room: "global" };
-    socket.emit("send", data);
-    setMsg("");
+  const sendMessage = () => {
+    socket.emit("new message", {
+      content: "hello",
+      chatId: selectedChat._id,
+    });
   };
 
   return (
-    <div className="p-4">
-      <div className="border h-64 overflow-y-scroll">
-        {messages.map((m, i) => (
-          <div key={i}><b>{m.sender}:</b> {m.content}</div>
-        ))}
-      </div>
-
-      <input
-        className="border p-2"
-        value={msg}
-        onChange={(e) => setMsg(e.target.value)}
-      />
-      <button onClick={send} className="bg-blue-500 text-white p-2 ml-2">
-        Send
-      </button>
+    <div>
+      <button onClick={sendMessage}>Send</button>
     </div>
   );
 }
+
+export default ChatBox;
